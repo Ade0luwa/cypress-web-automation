@@ -1,0 +1,51 @@
+{
+  "Username_Password": {
+    "password": "admin",
+    "username": "admin",
+    "invalidPassword": "admin1",
+    "invalidUsername": "admin1"
+  },
+  "Filter_Values": {
+    "udpMode": "UDP",
+    "ristMode": "RIST",
+    "srtMode": "SRT",
+    "rtpMode": "RTP",
+    "Status1": "started",
+    "Status2": "disabled",
+    "statusData": "statusIndicator",
+    "flowID": "flowId",
+    "inputModeData": "inputInfo.InputMode",
+    "outputModeData": "outputInfo.OutputMode"
+  },
+  "Create": {
+    "UDPinputID": "DAN-AUTOMATION-UDP-IN-",
+    "UDPoutputID": "DAN-AUTOMATION-UDP-OUT-",
+    "RTPoutputID": "DAN-AUTOMATION-RTP-OUT-",
+    "SRTinputID": "DAN-AUTOMATION-SRT-IN-",
+    "SRToutputID": "DAN-AUTOMATION-SRT-OUT-",
+    "RISTinputID": "DAN-AUTOMATION-RIST-IN-",
+    "RISToutputID": "DAN-AUTOMATION-RIST-OUT-",
+    "flowID": "DAN-AUTOMATION-FLOW-",
+    "encoder": "DAN-AUTOMATION-ENCODER-",
+    "decoder": "DAN-AUTOMATION-DECODER-",
+    "udx": "DAN-AUTOMATION-UDX-",
+    "IP": "239.153.15.1",
+    "reflektorIP": "172.16.151.226",
+    "mainRFKip": "172.16.136.24",
+    "secondRFKip": "172.16.151.226",
+    "UDPdestinationIP": "239.153.20.20",
+    "Data1InterfaceType": "eth0",
+    "UDPinputCounter": 1,
+    "UDPoutputCounter": 1,
+    "RTPoutputCounter": 1,
+    "RISTinputCounter": 0,
+    "RISToutputCounter": 0,
+    "SRTinputCounter": 0,
+    "SRToutputCounter": 0,
+    "flowCounter": 1,
+    "udxCounter": 0,
+    "decoderCounter": 0,
+    "encoderCounter": 0,
+    "portNumber": 5000
+  }
+}

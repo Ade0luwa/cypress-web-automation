@@ -1,0 +1,37 @@
+{
+  "name": "web-automation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "script": "cypress run --headed",
+    "headlessRun": "cypress run",
+    "udp-udp": "cypress run --spec 'cypress/e2e/2-createUDPSource.cy.js,cypress/e2e/3-createFlow.cy.js,cypress/e2e/4-udp-udp.cy.js,cypress/e2e/5-udp-rtp.cy.js' --headed",
+    "udp-rist": "cypress run --spec 'cypress/e2e/2-createUDPSource.cy.js,cypress/e2e/6-udp-rist.cy.js' --headed",
+    "udp-srt": "cypress run --spec 'cypress/e2e/2-createUDPSource.cy.js,cypress/e2e/7-udp-srt.cy.js' --headed",
+    "merge": "mochawesome-merge cypress/reports/*.json -o cypress/reports/fullReport.json",
+    "merge_html": "marge cypress/reports/fullReport.json -f fullReport -o cypress/reports",
+    "generateReport": "npm run merge && npm run merge_html",
+    "test-all-headless": "npm run headlessRun && npm run generateReport",
+    "test-all": "npm run script && npm run generateReport",
+    "test-udp": "npm run udp-udp && npm run generateReport",
+    "test-rist": "npm run udp-rist && npm run generateReport",
+    "test-srt": "npm run udp-srt && npm run generateReport"
+
+  },
+  "keywords": [],
+  "author": "Daniel Adegbesan",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@shelex/cypress-allure-plugin": "^2.40.2",
+    "cypress": "^13.15.0",
+    "cypress-map": "^1.21.0",
+    "cypress-multi-reporters": "^2.0.4",
+    "cypress-wait-until": "^2.0.0",
+    "cypress-xpath": "^2.0.1",
+    "mocha-junit-reporter": "^2.2.1",
+    "mochawesome": "^7.1.3",
+    "mochawesome-merge": "^4.3.0",
+    "mochawesome-report-generator": "^6.2.0"
+  }
+}
