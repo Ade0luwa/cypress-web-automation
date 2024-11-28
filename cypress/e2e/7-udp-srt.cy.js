@@ -23,17 +23,18 @@ describe( "UDP source - SRT destination - SRT source",
       it('Create CALLER SRT destination in main rfk', function(){
         cy.visit(url)
         cy.login(username,password)
-      //   cy.createSRTDestination('CALLER', secondRFKip)
-      //   cy.startDestination('SRT')
-      // })  
+        cy.createSRTDestination('CALLER', secondRFKip)
+        cy.startDestination('SRT')
+      })  
 
-      // it('Create LISTENER SRT Source in second reflektor', function(){
-      //   cy.visit(url1)
-      //   cy.login(username,password)
-      //   cy.createSRTSource('LISTENER')
-      //   cy.startSource('SRT')
-      // })
-      // it('Verify SRT Destination in RFK 1 and RIST Source in RFK2', function(){
-      //   cy.verifyConnections(url, url1, 'SRT', username, password)
+      it('Create LISTENER SRT Source in second reflektor', function(){
+        cy.visit(url1)
+        cy.login(username,password)
+        cy.createSRTSource('LISTENER')
+        cy.startSource('SRT')
+      })
+      
+      it('Verify SRT Destination in RFK 1 and RIST Source in RFK2', function(){
+        cy.verifyConnections(url, url1, 'SRT', username, password)
       }) 
 })

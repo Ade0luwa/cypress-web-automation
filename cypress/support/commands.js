@@ -126,7 +126,7 @@ Cypress.Commands.add("viewFlows", () => {
   flows.getFlowField().click();
   sources.getHeader().should("have.text", "Flows");
   cy.verifyTableColumns();
-  cy.wait(4000)
+  cy.wait(3000)
   sources.getFilterBtn().click();
   cy.filterTableByStatus();
 });
@@ -151,9 +151,9 @@ Cypress.Commands.add("verifyTableColumns", () => {
 });
 
 Cypress.Commands.add("filterInputByMode", () => {
-  cy.wait(4000)
-  sources.getFilterBtn().should('be.visible').click();
   cy.wait(3000)
+  sources.getFilterBtn().should('be.visible').click();
+  cy.wait(2000)
   //select column
   sources.getDropdown().should('be.visible').eq(2).click({ force: true });
   sources.getFilterOptions(inputModeSelector).click();
@@ -179,9 +179,9 @@ Cypress.Commands.add("filterInputByMode", () => {
   
 
 Cypress.Commands.add("filterOutputByMode", () => {
-  cy.wait(4000)
-  sources.getFilterBtn().should('be.visible').click();
   cy.wait(3000)
+  sources.getFilterBtn().should('be.visible').click();
+  cy.wait(2000)
   sources.getDropdown().eq(2).should('be.visible').click({ force: true });
   sources.getFilterOptions(outputModeSelector).click();
   //select operator
@@ -241,7 +241,7 @@ Cypress.Commands.add("checkForNoResults", (searchType, expectedText, rowType, ge
   
 
 Cypress.Commands.add("filterTableByStatus", () => {
-  cy.wait(2000);
+  cy.wait(1500);
   sources.getDropdown().eq(2).should('be.visible').click({ force: true });
   sources.getFilterOptions(statusSelector).click();
   //select operator
@@ -260,9 +260,9 @@ Cypress.Commands.add("filterTableByStatus", () => {
 });
 
 Cypress.Commands.add("filterTableByID", (filterType, filterID) => {
-  cy.wait(4000)
-  sources.getFilterBtn().should('be.visible').click();
   cy.wait(3000)
+  sources.getFilterBtn().should('be.visible').click();
+  cy.wait(2000)
   sources.getDropdown().eq(2).should('be.visible').click({ force: true });
   sources.getFilterOptions(filterType).click();
   // select operator
@@ -325,7 +325,7 @@ Cypress.Commands.add("createSource", (sourceType, mode, profileMode, additionalS
       additionalSteps();
     }
     sources.getSubmitBtn().click();
-    cy.wait(3000);
+    cy.wait(2000);
     //sources.getSuccess().should("have.text", `Input '${inputID}' with 'id: ${inputID}' successfully created!`);
     cy.log(`Writing updated sourceCounter: ${sourceCounter}`);
     cy.task(`write${sourceType}InputCounter`, sourceCounter).then(() => {
