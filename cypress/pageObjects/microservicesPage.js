@@ -1,6 +1,9 @@
 /// <reference types= "cypress" />
 
-class sourcesPage{
+class microservicesPage{
+    getMicroserviceTab(){
+        return cy.get('.MuiTabs-flexContainer > :nth-child(3)')
+    }
     getID(){
         return cy.get('input[name="processingUnitId"]')
     }
@@ -19,5 +22,11 @@ class sourcesPage{
     getSuccess(){
         return cy.get('.MuiAlert-message')
     }
+    getVideoControls(){
+        return cy.get(':nth-child(2) > .MuiButtonBase-root > .MuiAccordionSummary-content > .title-5')
+    }
+    getVideoPID(){
+        return cy.get('input[name="videoPid"]')
+    }
 }
-export default sourcesPage
+export default microservicesPage

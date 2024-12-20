@@ -31,6 +31,15 @@ class destinationPage{
     getOutputIDRow() {
         return cy.get('.service-container > .MuiButtonBase-root')
     }
+    getInterface(){
+        return cy.xpath('/html/body/div[2]/div[3]/form/div[1]/div[7]/div/div/div[2]/div/div[3]/div/div')
+    }
+    getMode(){
+        return cy.xpath('/html/body/div[2]/div[3]/form/div[1]/div[7]/div/div/div[2]/div/div[1]/div/div')
+    }
+    getCloseDropdown(){
+        return cy.get('svg.MuiSvgIcon-root.MuiSvgIcon-fontSizeMedium.MuiSelect-icon.MuiSelect-iconFilled.MuiSelect-iconOpen.css-gofjbs')
+    }
     
 }
 export default destinationPage

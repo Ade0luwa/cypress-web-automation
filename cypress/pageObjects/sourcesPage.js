@@ -55,6 +55,15 @@ class sourcesPage{
     getPort(){
         return cy.get('input[name="port"]')
     }
+    getProfile(){
+        return cy.get('input[name="Profile"]')
+    }
+    getMode(){
+        return cy.xpath('/html/body/div[2]/div[3]/form/div[1]/div[6]/div/div/div[2]/div/div[1]/div/div')
+    }
+    getInterface(){
+        return cy.xpath('/html/body/div[2]/div[3]/form/div[1]/div[6]/div/div/div[2]/div/div[3]/div/div')
+    }
     getSubmitBtn(){
         return cy.get('form > .MuiButtonGroup-root > .MuiButtonGroup-firstButton')
     }

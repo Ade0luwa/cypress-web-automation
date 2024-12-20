@@ -10,7 +10,7 @@ module.exports = defineConfig({
       geolocation: "allow",
     },
     url: "https://172.16.136.24",
-    url1: "https://172.16.151.226",
+    url1: "https://172.16.121.184",
   },
   reporter: "cypress-multi-reporters",
   reporterOptions: {
@@ -378,7 +378,6 @@ module.exports = defineConfig({
           return null;
         },
       });
-      // implement node event listeners here
     },
   },
 });

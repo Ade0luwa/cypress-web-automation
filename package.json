@@ -16,7 +16,6 @@
     "test-udp": "npm run udp-udp && npm run generateReport",
     "test-rist": "npm run udp-rist && npm run generateReport",
     "test-srt": "npm run udp-srt && npm run generateReport"
-
   },
   "keywords": [],
   "author": "Daniel Adegbesan",
@@ -25,6 +24,7 @@
   "devDependencies": {
     "@shelex/cypress-allure-plugin": "^2.40.2",
     "cypress": "^13.15.0",
+    "cypress-drag-drop": "^1.1.1",
     "cypress-map": "^1.21.0",
     "cypress-multi-reporters": "^2.0.4",
     "cypress-wait-until": "^2.0.0",
@@ -33,5 +33,8 @@
     "mochawesome": "^7.1.3",
     "mochawesome-merge": "^4.3.0",
     "mochawesome-report-generator": "^6.2.0"
+  },
+  "dependencies": {
+    "cypress-real-events": "^1.13.0"
   }
 }

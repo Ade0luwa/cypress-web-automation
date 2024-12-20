@@ -9,7 +9,10 @@ import sourcesPage from "../pageObjects/sourcesPage";
 import destinationPage from "../pageObjects/destinationPage";
 import flowsPage from "../pageObjects/flowsPage";
 import statusPage from "../pageObjects/statusPage";
+import microservicesPage from "../pageObjects/microservicesPage";
+import connectionViewPage from "../pageObjects/connectionViewPage";
 import { getRandomPortNumber } from './utils';
+import 'cypress-drag-drop'
 
 // import 'cypress-wait-until';
 // import 'cypress-map';
@@ -22,6 +25,8 @@ const sources = new sourcesPage()
 const destination = new destinationPage()
 const flows = new flowsPage()
 const status = new statusPage()
+const microservice = new microservicesPage()
+const connectionView = new connectionViewPage()
 
 const nameBases = {
   UDP: {
@@ -75,6 +80,16 @@ const RISToutputNameBase  = data.Create.RISToutputID
 const flowNameBase  = data.Create.flowID
 const ipAddr = data.Create.IP
 const Data1  = data.Create.Data1InterfaceType
+const videoPID = data.encoder.videoPID
+const videoRes1 = data.encoder.videoRes1
+const videoRes2 = data.encoder.videoRes2
+const videoRes3 = data.encoder.videoRes3
+const videoRes4 = data.encoder.videoRes4
+const videoRes5 = data.encoder.videoRes5
+const sixtyHZ = data.encoder.sixtyHZ
+const fiveNineHZ = data.encoder.fiveNineHZ
+const chroma1 = data.encoder.chroma1
+const chroma2 = data.encoder.chroma2
 
 Cypress.Commands.add("login", (username, password) => {
   login.getUsername().clear().type(username);
@@ -140,7 +155,6 @@ Cypress.Commands.add("verifyTableColumns", () => {
       checkedColumns.push(checkbox.name);
     });
     sources.getColumnBtn().click();
-    // Verify that these columns are the only ones displayed in the table headers
     sources.getTableHeaders().each(($header) => {
       const headerField = $header.attr("data-field");
       if (headerField !== "__check__" && headerField !== "##") {
@@ -293,6 +307,17 @@ Cypress.Commands.add("filterTableByOutputID", (outputType) => {
   });
 });
 
+
+Cypress.Commands.add("filterTableByMicroservice", (microserviceType) => {
+  const taskName = `read${microserviceType}counter`;
+  cy.task(taskName).then((counter) => {
+    const nameBase = nameBases[microserviceType].base;
+    const microserviceID = `${nameBase}${counter}`;
+    cy.filterTableByID('processingUnitInfo.processingUnitId', microserviceID);
+    destination.getOutputIDRow().should('contain.text', microserviceID);
+  });
+});
+
 Cypress.Commands.add("filterTableByFlowID", () => {
   cy.task("readFlowCounter").then((counter) => {
     const flowID = `${flowNameBase}${counter}`;
@@ -301,7 +326,7 @@ Cypress.Commands.add("filterTableByFlowID", () => {
   });
 });
 
-Cypress.Commands.add("createSource", (sourceType, mode, profileMode, additionalSteps) => {
+Cypress.Commands.add("createSource", (sourceType, mode, modeTypes, additionalSteps) => {
   cy.log(`Starting create${sourceType}Source function`);
   sources.getCreateBtn().click();
   cy.wait(500);
@@ -316,9 +341,9 @@ Cypress.Commands.add("createSource", (sourceType, mode, profileMode, additionalS
     cy.log("Selecting input mode.....");
     sources.getDropdown().eq(1).click({ force: true });
     sources.getFilterOptions(mode).click();
-    if (profileMode) {
-      sources.getDropdown().eq(3).click({ force: true });
-      sources.getFilterOptions(profileMode).click();
+    if (modeTypes) {
+      sources.getMode().click({ force: true });
+      sources.getFilterOptions(modeTypes).click();
       cy.wait(1000)
     }
     if (additionalSteps) {
@@ -326,7 +351,7 @@ Cypress.Commands.add("createSource", (sourceType, mode, profileMode, additionalS
     }
     sources.getSubmitBtn().click();
     cy.wait(2000);
-    //sources.getSuccess().should("have.text", `Input '${inputID}' with 'id: ${inputID}' successfully created!`);
+    sources.getSuccess().should("have.text", `Input '${inputID}' with 'id: ${inputID}' successfully created!`);
     cy.log(`Writing updated sourceCounter: ${sourceCounter}`);
     cy.task(`write${sourceType}InputCounter`, sourceCounter).then(() => {
       cy.log("Counter updated successfully");
@@ -338,15 +363,13 @@ Cypress.Commands.add("createUDPSource", () => {
   cy.createSource('UDP', udpMode, null, () => {
     sources.getIP().eq(0).clear().type(ipAddr);
     cy.log("Selecting interface.....");
-    sources.getDropdown().eq(3).click({ force: true });
-    sources.getFilterOptions(Data1).click();
+    sources.getInterface().click({ force: true });
+    sources.getFilterOptions(Data1).click({force: true});
   });
 });
 
-Cypress.Commands.add("createRISTSource", (profileMode) => {
-  cy.createSource('RIST', ristMode, profileMode, () => {
-    sources.getDropdown().eq(4).click({ force: true });
-    sources.getFilterOptions("SERVER").click();
+Cypress.Commands.add("createRISTSource", (modeTypes) => {
+  cy.createSource('RIST', ristMode, modeTypes, () => {
   });
 });
 
@@ -357,11 +380,11 @@ Cypress.Commands.add("updatePortNumber", () => {
   });
 });
 
-Cypress.Commands.add("createSRTSource", (profileMode) => {
+Cypress.Commands.add("createSRTSource", (modeTypes) => {
   cy.task("readPort").then((portNo) => {
     portNo+=2;
     const portNum = portNo;
-    cy.createSource("SRT", srtMode, profileMode, () => {
+    cy.createSource("SRT", srtMode, modeTypes, () => {
       sources.getPort().clear().type(portNum);
     });
   cy.task('writePort', portNo).then(() => {
@@ -371,13 +394,12 @@ Cypress.Commands.add("createSRTSource", (profileMode) => {
 })
 });
 
-
-
-Cypress.Commands.add("createDestination", (destinationType, mode, profileMode, additionalSteps) => {
+Cypress.Commands.add("createDestination", (destinationType, mode, modeTypes, microservice, additionalSteps) => {
   destination.getDestField().click();
   sources.getCreateBtn().click();
   cy.wait(2000);
   sources.getSingleCreate().click()
+  //find current output counter and increment for the new output id
   cy.task(`read${destinationType}OutputCounter`).then((destinationCounter) => {
     cy.log(`Current destinationCounter: ${destinationCounter}`);
     destinationCounter++;
@@ -385,19 +407,42 @@ Cypress.Commands.add("createDestination", (destinationType, mode, profileMode, a
     cy.log(`Generated outputID: ${outputID}`);
     destination.getOutputID().type(outputID);
     destination.getOutputName().type(outputID);
+
+    if (microservice) {
+      // Selecting the corresponding microservice
+      cy.task(`read${microservice}counter`).then((microserviceCounter) => {
+        const microserviceID = `${nameBases[microservice].base}${microserviceCounter}`;
+        cy.log(`Selecting corresponding microservice: ${microserviceID}`);
+        sources.getDropdown().eq(3).click({ force: true });
+        sources.getFilterOptions(microserviceID).click();
+        cy.get('body').click(0, 0);
+      });
+    } 
+    else {
+    // Selecting the corresponding input
+    cy.task("readUDPInputCounter").then((sourceCounter) => {
+      const inputID = `${nameBases.UDP.input}${sourceCounter}`;
+      cy.log(`Selecting corresponding input: ${inputID}`);
+      sources.getDropdown().eq(2).click({ force: true });
+      sources.getFilterOptions(inputID).click();
+      cy.wait(1000)
+      cy.get('body').click(0, 0);
+    });
+  }
     cy.log("Selecting output mode.....");
     sources.getDropdown().eq(1).click({ force: true });
     sources.getFilterOptions(mode).click();
-    if (profileMode) {
-      sources.getDropdown().eq(5).click({ force: true });
-      sources.getFilterOptions(profileMode).click();
+    if (modeTypes) {
+      destination.getMode().click({ force: true });
+      sources.getFilterOptions(modeTypes).click();
+      cy.wait(1000)
     }
     if (additionalSteps) {
       additionalSteps();
     }
     sources.getSubmitBtn().click({ force: true });
     cy.wait(1000);
-    //sources.getSuccess().should("have.text", `Output '${outputID}' with 'id: ${outputID})' successfully created!`);
+    sources.getSuccess().should("contain.text", `Output '${outputID}' with 'id: ${outputID}' successfully created!`);
     cy.log(`Writing updated destinationCounter: ${destinationCounter}`);
     cy.task(`write${destinationType}OutputCounter`, destinationCounter).then(() => {
       cy.log("Counter updated successfully");
@@ -406,19 +451,12 @@ Cypress.Commands.add("createDestination", (destinationType, mode, profileMode, a
 });
 
 
-Cypress.Commands.add("createUDP_RTPdestination", (destinationType, mode, profileMode, additionalSteps) => {
-  cy.createDestination(destinationType, mode, profileMode, () => {
-    destination.getIP().eq(0).clear().type(outIP);
-    // Selecting the corresponding input
-    cy.task("readUDPInputCounter").then((sourceCounter) => {
-      const inputID = `${nameBases.UDP.input}${sourceCounter}`;
-      cy.log(`Selecting corresponding input: ${inputID}`);
-      sources.getDropdown().eq(2).click({ force: true });
-      sources.getFilterOptions(inputID).click();
-    });
+Cypress.Commands.add("createUDP_RTPdestination", (destinationType, mode, modeTypes, additionalSteps) => {
+  cy.createDestination(destinationType, mode, modeTypes, null, () => {
     cy.log("Selecting interface.....");
-    sources.getDropdown().eq(5).click({ force: true });
+    destination.getInterface().click({ force: true });
     sources.getFilterOptions(Data1).click();
+    destination.getIP().eq(0).clear().type(outIP);
 
     // Execute additional steps if provided
     if (additionalSteps) {
@@ -430,6 +468,17 @@ Cypress.Commands.add("createUDP_RTPdestination", (destinationType, mode, profile
 Cypress.Commands.add("createUDPDestination", () => {
   cy.createUDP_RTPdestination('UDP', udpMode, null);
 });
+
+// Usage for UDP
+Cypress.Commands.add("createEncUDPout", () => {
+  cy.createDestination('UDP', udpMode, null, 'ENCODER', () => {
+    destination.getIP().eq(0).clear().type(outIP);
+    cy.log("Selecting interface.....");
+    destination.getInterface().click({ force: true });
+    sources.getFilterOptions(Data1).click();
+  })
+});
+
 
 // Usage for RTP
 Cypress.Commands.add("createRTPDestination", () => {
@@ -443,36 +492,19 @@ Cypress.Commands.add("createRTPDestination", () => {
 });
 
 
-Cypress.Commands.add("createRISTDestination", (profileMode, ipAddress) => {
-  cy.createDestination("RIST", ristMode, profileMode, () => {
+Cypress.Commands.add("createRISTDestination", (modeTypes, ipAddress) => {
+  cy.createDestination("RIST", ristMode, modeTypes, null, () => {
     destination.getIP().eq(0).clear().type(ipAddress);
-    sources.getDropdown().eq(6).click({ force: true });
-    sources.getFilterOptions("CLIENT").click();
-    // Selecting the corresponding input
-    cy.task("readUDPInputCounter").then((sourceCounter) => {
-      const inputID = `${nameBases.UDP.input}${sourceCounter}`;
-      cy.log(`Selecting corresponding input: ${inputID}`);
-      sources.getDropdown().eq(2).click({ force: true });
-      sources.getFilterOptions(inputID).click();
-    });
   });
 });
 
-Cypress.Commands.add("createSRTDestination", (profileMode, ipAddress) => {
-  cy.createDestination("SRT", srtMode, profileMode, () => {
+Cypress.Commands.add("createSRTDestination", (modeTypes, ipAddress) => {
+  cy.createDestination("SRT", srtMode, modeTypes, null, () => {
     cy.task("readPort").then((portNo) => {
       portNo += 2;
       const portNum = portNo;
-
       destination.getIP().eq(0).clear().type(ipAddress);
       sources.getPort().clear().type(portNum);
-      // Selecting the corresponding input
-      cy.task("readUDPInputCounter").then((sourceCounter) => {
-        const inputID = `${nameBases.UDP.input}${sourceCounter}`;
-        cy.log(`Selecting corresponding input: ${inputID}`);
-        sources.getDropdown().eq(2).click({ force: true });
-        sources.getFilterOptions(inputID).click();
-      });
     });
   });
 });
@@ -501,13 +533,7 @@ Cypress.Commands.add("createFlow", () => {
     cy.wait(500);
     sources.getSubmitBtn().click({ force: true });
     cy.wait(1000);
-    // sources
-    //   .getSuccess()
-    //   .should(
-    //     "have.text",
-    //     "Flow '" + flowID + "' with 'id: " + flowID + ")' successfully created!"
-    //   );
-
+    //sources.getSuccess().should("contain.text", `Flow '${flowID}' with 'id: ${flowID})' successfully created!`);
     cy.log(`Writing updated flowCounter: ${flowCounter}`);
     cy.wait(1000);
     cy.task("writeFlowCounter", flowCounter).then(() => {
@@ -525,17 +551,10 @@ Cypress.Commands.add("restartOption", (restartValue) => {
   cy.wait(500);
   flows.getYesConfirmation().click();
   cy.wait(1000);
-  sources
-    .getSuccess()
-    .should(
-      "have.text",
-      `Resource '${restartValue}' with 'id: ${restartValue})' started successfully!`
-    );
+  sources.getSuccess().should("contain.text", `Resource '${restartValue}' with 'id: ${restartValue}' started successfully!`);
   sources.getStatusRow().should("contain.text", "started");
 });
   
-
-
 Cypress.Commands.add("startFlow", () => {
   flows.getFlowField().click();
   cy.wait(1000);
@@ -561,6 +580,15 @@ Cypress.Commands.add("startDestination", (destinationType) => {
   cy.task(`read${destinationType}OutputCounter`).then((outputCounter) => {
     const outputID = `${nameBases[destinationType].output}${outputCounter}`;
     cy.restartOption(outputID);
+  });
+});
+
+Cypress.Commands.add("startMicroservice", (microserviceType) => {
+  cy.wait(1000);
+  cy.filterTableByMicroservice(microserviceType);
+  cy.task(`read${microserviceType}counter`).then((microserviceCounter) => {
+    const microserviceID = `${nameBases[microserviceType].base}${microserviceCounter}`;
+    cy.restartOption(microserviceID);
   });
 });
 
@@ -697,66 +725,242 @@ Cypress.Commands.add("verifySRTDestinationConnection", () => {
 });
 
 
-// Specific function to verify SRT destination connection
-Cypress.Commands.add("createMicroservices", (microserviceType, otherMicroservice, additionalSteps) => {
+Cypress.Commands.add("createMicroservices", (microserviceType, additionalSteps) => {
+  microservice.getMicroserviceTab().click()
+  cy.wait(2000)
   cy.log(`Starting create${microserviceType} function`);
   sources.getCreateBtn().click();
   cy.wait(500);
+  sources.getSingleCreate().click()
+
+  cy.task(`read${microserviceType}counter`).then((microserviceCounter) => {
+    cy.log(`Current microserviceCounter: ${microserviceCounter}`);
+    microserviceCounter++;
+    const microserviceID = `${nameBases[microserviceType].base}${microserviceCounter}`;
+    cy.log(`Generated microserviceID: ${microserviceID}`);
+    microservice.getID().type(microserviceID)
+    microservice.getName().type(microserviceID)
+    
+    cy.log("Selecting Microservice mode.....");
+    sources.getDropdown().eq(1).click({ force: true });
+    sources.getFilterOptions(microserviceType).click();
+
+    if (additionalSteps) {
+      additionalSteps();
+    }
+    sources.getSubmitBtn().click();
+    cy.wait(2000);
+    //sources.getSuccess().should("have.text", `Input '${inputID}' with 'id: ${inputID}' successfully created!`);
+    cy.log(`Writing updated sourceCounter: ${microserviceCounter}`);
+    cy.task(`write${microserviceType}counter`, microserviceCounter).then(() => {
+      cy.log("Counter updated successfully");
+    });
+  });
 });
 
-// Specific function to verify SRT destination connection
-Cypress.Commands.add("createDecoder", () => {
-  
+Cypress.Commands.add("createDecoder", (sourceType) => {
+  cy.createMicroservices('DECODER', () => {
+    cy.log("Selecting Input.....");
+    cy.task(`read${sourceType}InputCounter`).then((sourceCounter) => {
+      const inputID = `${nameBases.UDP.input}${sourceCounter}`;
+      cy.log(`Selecting corresponding input: ${inputID}`);
+      sources.getDropdown().eq(2).click({ force: true });
+      sources.getFilterOptions(inputID).click();
+    });
+  })
 });
 
-// Specific function to verify SRT destination connection
-Cypress.Commands.add("createEncoder", () => {
-  
+Cypress.Commands.add("createEncoder", (microserviceType, encoderType) => {
+  cy.createMicroservices('ENCODER', () => {
+    cy.log("Selecting microservice.....");
+    cy.task(`read${microserviceType}counter`).then((microserviceCounter) => {
+      const microserviceID = `${nameBases[microserviceType].base}${microserviceCounter}`;
+      cy.log(`Selecting corresponding microservice: ${microserviceID}`);
+      sources.getDropdown().eq(3).click({ force: true });
+      sources.getFilterOptions(microserviceID).click();
+      cy.wait(4000)
+      microservice.getVideoControls().click()
+      cy.wait(1000)
+      
+      //get encoder type
+      sources.getDropdown().eq(4).click({ force: true });
+      sources.getFilterOptions(encoderType).click();
+      
+      microservice.getVideoPID().type(videoPID)
+
+      //get profile
+      if (encoderType === "HEVC"){
+        sources.getDropdown().eq(11).click({ force: true });
+        sources.getFilterOptions('MAIN').click();
+        //get gop type
+        sources.getDropdown().eq(13).click({ force: true });
+        sources.getFilterOptions('IP').click();
+      }
+      else if (encoderType === "H264"){
+        //get profile
+        sources.getDropdown().eq(11).click({ force: true });
+        sources.getFilterOptions('HIGH').click();
+      }
+      
+      //VIDEO RESOLUTION
+      sources.getDropdown().eq(5).click({ force: true });
+      sources.getFilterOptions(videoRes1).click();
+      
+      //FRAME RATE
+      sources.getDropdown().eq(6).click({ force: true });
+      sources.getFilterOptions(fiveNineHZ).click();
+      
+      // //VIDEO FORMAT
+      // sources.getDropdown().eq(7).click({ force: true });
+      
+      //CHROMA FORMAT
+      sources.getDropdown().eq(8).click({ force: true });
+      sources.getFilterOptions(chroma1).click();
+      
+      //BIT DEPTH
+      //sources.getDropdown().eq(10).click({ force: true });
+    });
+  })
 });
 
-// Specific function to verify SRT destination connection
-Cypress.Commands.add("createUDX", () => {
-  
+Cypress.Commands.add("UDPSourceToDecoderToEncoderToDestination", (encoderType) => {
+  cy.createUDPSource()
+  cy.startSource('UDP')
+  cy.createDecoder('UDP')
+  cy.createFlow()
+  cy.startMicroservice('DECODER')
+  cy.createEncoder('DECODER', encoderType)
+  cy.startMicroservice('ENCODER')
+  cy.createEncUDPout()
+  cy.startDestination('UDP')
 });
 
 
-// Cypress.Commands.add("createSource", (sourceType, mode, profileMode, additionalSteps) => {
-//   cy.log(`Starting create${sourceType}Source function`);
-//   sources.getCreateBtn().click();
-//   cy.wait(500);
-//   cy.task(`read${sourceType}InputCounter`).then((sourceCounter) => {
-//     cy.log(`Current sourceCounter: ${sourceCounter}`);
-//     sourceCounter++;
-//     const inputID = `${nameBases[sourceType].input}${sourceCounter}`;
-//     cy.log(`Generated inputID: ${inputID}`);
-//     sources.getInputID().type(inputID);
-//     sources.getInputName().type(inputID);
-//     cy.log("Selecting input mode.....");
-//     sources.getDropdown().eq(1).click({ force: true });
-//     sources.getFilterOptions(mode).click();
-//     if (profileMode) {
-//       sources.getDropdown().eq(3).click({ force: true });
-//       sources.getFilterOptions(profileMode).click();
-//       cy.wait(1000)
-//     }
-//     if (additionalSteps) {
-//       additionalSteps();
-//     }
-//     sources.getSubmitBtn().click();
-//     cy.wait(1000);
-//     sources.getSuccess().should("have.text", `Input '${inputID}' with 'id: ${inputID}' successfully created!`);
-//     cy.log(`Writing updated sourceCounter: ${sourceCounter}`);
-//     cy.task(`write${sourceType}InputCounter`, sourceCounter).then(() => {
-//       cy.log("Counter updated successfully");
-//     });
-//   });
-// });
+Cypress.Commands.add("CreateConnectionFlow", () => {
+  connectionView.getConnectionViewPage().click()
+  cy.wait(1000)
+  connectionView.getConnectionsCreateBtn().click()
+  cy.wait(1000)
 
-// Cypress.Commands.add("createUDPSource", () => {
-//   cy.createSource('UDP', udpMode, () => {
-//     sources.getIP().eq(0).clear().type(ipAddr);
-//     cy.log("Selecting interface.....");
-//     sources.getDropdown().eq(3).click({ force: true });
-//     sources.getFilterOptions(Data1).click();
-//   });
-// });
+  cy.task("readFlowCounter").then((flowCounter) => {
+    cy.log(`Current flowCounter: ${flowCounter}`);
+    flowCounter++;
+    const flowID = `${flowNameBase}${flowCounter}`;
+    cy.log(`Generated flowID: ${flowID}`);
+    connectionView.getFlowId().type(flowID);
+    connectionView.getFlowName().type(flowID);
+  });
+
+    //create resources
+    cy.CreateConnectionSource()
+    cy.CreateConnectionDestination()
+    cy.wait(1000)
+    connectionView.getApplyBtn().click({force: true})
+    cy.wait(1000)
+    connectionView.getCreateBtn().click()
+  });
+
+
+Cypress.Commands.add("CreateConnectionSource", () => {
+    //create resources
+    connectionView.getSourceField().click({ force: true });
+    cy.wait(500)
+
+    connectionView.getCreateResourceBtn().click()
+    cy.wait(500)
+
+    //select source type
+    sources.getDropdown().eq(3).click({ force: true });
+    sources.getFilterOptions('UDP').click();
+    //select mumber of sources
+    connectionView.getSourcesNumber().clear().type('1')
+    connectionView.getBulkAddBtn().click()
+    cy.wait(500)
+
+    cy.task("readUDPInputCounter").then((sourceCounter) => {
+      sourceCounter++;
+      const inputID = `${UDPinputNameBase}${sourceCounter}`;
+      cy.log(`Selecting corresponding input: ${inputID}`);
+      connectionView.getSourceID().type(inputID);
+      connectionView.getSourceAliasName().type(inputID);
+
+      connectionView.getSourceIP().clear().type(ipAddr);
+      connectionView.getConnectionResourceCreate().click();
+      cy.wait(500);
+      connectionView.getCloseBtn().click();
+      cy.wait(500);
+      cy.task("writeUDPInputCounter", sourceCounter).then(() => {
+        cy.log("Input counter updated successfully");
+      });
+      connectionView.getCloseModalBtn().click();
+      cy.wait(1000)
+
+      connectionView.getSourceField().type(inputID)
+      cy.get('.MuiAutocomplete-listbox').contains(inputID).click();
+      
+    });
+  });
+
+  Cypress.Commands.add("CreateConnectionDestination", (microservice) => {
+    //create resources
+    connectionView.getDestinationField().click({ force: true });
+    cy.wait(500)
+
+    connectionView.getCreateResourceBtn().click()
+    cy.wait(500)
+
+    //select destination type
+    sources.getDropdown().eq(3).click({ force: true });
+    sources.getFilterOptions('UDP').click();
+    //select mumber of destination
+    connectionView.getSourcesNumber().clear().type('1')
+    connectionView.getBulkAddBtn().click()
+    cy.wait(500)
+
+    cy.task("readUDPOutputCounter").then((destCounter) => {
+      destCounter++;
+      const outputID = `${UDPoutputNameBase}${destCounter}`;
+      connectionView.getDestinationID().type(outputID);
+      connectionView.getDestinationAliasName().type(outputID);
+      connectionView.getSourceIP().clear().type(outIP);
+      connectionView.getSettingsBtn().click()
+      cy.wait(500)
+
+      if (microservice) {
+        // Selecting the corresponding microservice
+        cy.task(`read${microservice}counter`).then((microserviceCounter) => {
+          const microserviceID = `${nameBases[microservice].base}${microserviceCounter}`;
+          cy.log(`Selecting corresponding microservice: ${microserviceID}`);
+          sources.getDropdown().eq(3).click({ force: true });
+          sources.getFilterOptions(microserviceID).click();
+          cy.get('body').click(0, 0);
+        });
+      } 
+      else {
+      // Selecting the corresponding input
+      cy.task("readUDPInputCounter").then((sourceCounter) => {
+        const inputID = `${nameBases.UDP.input}${sourceCounter}`;
+        cy.log(`Selecting corresponding input: ${inputID}`);
+        sources.getDropdown().eq(2).click({ force: true });
+        sources.getFilterOptions(inputID).click();
+        cy.wait(1000)
+        cy.get('body').click(0, 0);
+      });
+    }
+    sources.getSubmitBtn().click({ force: true });
+    cy.wait(1000);
+      connectionView.getConnectionResourceCreate().click();
+      cy.wait(500);
+      connectionView.getCloseBtn().click();
+      cy.wait(500);
+      cy.task("writeUDPOutputCounter", destCounter).then(() => {
+        cy.log("Output counter updated successfully");
+      });
+      connectionView.getCloseModalBtn().click();
+      cy.wait(1000)
+
+      connectionView.getDestinationField().type(outputID)
+      cy.get('.MuiAutocomplete-listbox').contains(outputID).click();
+
+    });
+  });
